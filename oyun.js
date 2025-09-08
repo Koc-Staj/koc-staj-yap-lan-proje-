@@ -58,6 +58,7 @@ function zorlukKatsayisi() {
 
 // Oyun durumu değişkenleri
 let mevcutSeviye = 1;
+let oyunAktif = false; 
 let toplamPuan = 0;
 let mevcutHedefSayi = 0;
 let zamanlayici;
@@ -81,6 +82,7 @@ function butonlariAktiflestir() {
 
 // Yeni seviyeyi başlat
 function seviyeyiBaslat() {
+    oyunAktif = true;
     butonlariAktiflestir();
     seviyeSonuMesaji.classList.add('gizli');
 
@@ -175,6 +177,7 @@ butonlar.forEach(buton => {
 });
 
 // Oyuncu kazandığında
+oyunAktif = false;
 function oyunuKazan() {
     if (kazanmaSesi) {
         sesCal(kazanmaSesi);
@@ -207,6 +210,7 @@ function oyunuKazan() {
 }
 
 // Oyuncu kaybettiğinde
+oyunAktif = false;
 function oyunuKaybet(sebep) {
     zamanlayiciSesi.pause();
     sesCal(kaybetmeSesi);
@@ -242,4 +246,35 @@ baslaButonu.addEventListener('click', () => {
     oyunAlani.classList.remove('gizli');
     skorTablosu.classList.remove('gizli');
     seviyeyiBaslat();
+});
+
+// ----------------- KLAVYE KONTROLLERİ -----------------
+window.addEventListener('keydown', (e) => {
+    
+    if (e.key === "Enter") {
+        if (!sonrakiSeviyeButonu.disabled) {
+            sonrakiSeviyeButonu.click();
+        }
+        return; 
+    }
+
+    
+    if (!oyunAktif) return;
+
+    
+    if (e.key >= "0" && e.key <= "9") {
+        const tus = parseInt(e.key);
+
+        
+        const hedefButon = Array.from(butonlar).find(b => parseInt(b.dataset.deger) === tus);
+
+        if (hedefButon && !hedefButon.disabled) {
+            hedefButon.click(); // butona tıklanmış gibi çalıştır
+        }
+    }
+
+    
+    if (e.key === "Escape") {
+        ayarlarPaneli.classList.toggle('gizli');
+    }
 });
