@@ -222,3 +222,53 @@ baslaButonu.addEventListener('click', () => {
     skorTablosu.classList.remove('gizli');
     seviyeyiBaslat();
 });
+
+// ----------------- AYARLAR -----------------
+const ayarlarButonu = document.getElementById('ayarlar-butonu');
+const ayarlarPaneli = document.getElementById('ayarlar-paneli');
+const ayarlarKapat = document.getElementById('ayarlar-kapat');
+const sesAcikCheck = document.getElementById('ses-acik');
+const zorlukSecim = document.getElementById('zorluk');
+
+// Aç-kapa
+ayarlarButonu.addEventListener('click', () => {
+    ayarlarPaneli.classList.toggle('gizli');
+});
+
+ayarlarKapat.addEventListener('click', () => {
+    ayarlarPaneli.classList.add('gizli');
+});
+
+// Ses kontrolü
+function sesCal(ses) {
+    if (ses && sesAcikCheck.checked) {
+        ses.currentTime = 0;
+        ses.play();
+    }
+}
+
+// oyun.js içindeki tüm ses.play() çağrılarını
+// => sesCal(sesAdi) şeklinde değiştirirsen ses aç/kapat kontrolü aktif olur.
+
+// Zorluk kontrolü
+function zorlukKatsayisi() {
+    switch (zorlukSecim.value) {
+        case "kolay": return 1.5;
+        case "zor": return 0.7;
+        default: return 1;
+    }
+}
+
+// seviyeyiBaslat içinde süre ayarlamasını güncelle:
+/// kalanZaman = (15 - mevcutSeviye) * zorlukKatsayisi();
+
+const sesSeviye = document.getElementById('ses-seviye');
+
+// Ses çalma fonksiyonu
+function sesCal(ses) {
+    if (ses && sesAcikCheck.checked) {
+        ses.volume = parseFloat(sesSeviye.value); // volume uygula
+        ses.currentTime = 0;
+        ses.play();
+    }
+}

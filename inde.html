@@ -13,6 +13,31 @@
 </head>
 <body>
 
+    <!-- Ayarlar Butonu -->
+<button id="ayarlar-butonu">⚙️ Ayarlar</button>
+
+<!-- Ayarlar Penceresi -->
+<div id="ayarlar-paneli" class="gizli">
+    <h3>Ayarlar</h3>
+    <label>
+        <input type="checkbox" id="ses-acik" checked>
+        Ses Açık
+    </label>
+        <br>
+    <label for="ses-seviye">Ses Düzeyi:</label>
+    <input type="range" id="ses-seviye" min="0" max="1" step="0.1" value="1">
+
+    <br>
+    <label for="zorluk">Zorluk: </label>
+    <select id="zorluk">
+        <option value="kolay">Kolay</option>
+        <option value="normal" selected>Normal</option>
+        <option value="zor">Zor</option>
+    </select>
+    <br>
+    <button id="ayarlar-kapat">Kapat</button>
+</div>
+
     <!-- Başlangıçta GÖRÜNEN tek ekran -->
     <div id="baslangic-ekrani">
         <h2>Sayı Avcısı</h2>
