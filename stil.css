@@ -266,3 +266,12 @@ body {
     margin-top: 5px;
 }
 
+const sesSeviye = document.getElementById('ses-seviye');
+
+function sesCal(ses) {
+    if (ses && sesAcikCheck.checked) {
+        ses.volume = parseFloat(sesSeviye.value); // 0.0 - 1.0 arası
+        ses.currentTime = 0;
+        ses.play();
+    }
+}

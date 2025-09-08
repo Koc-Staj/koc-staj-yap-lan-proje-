@@ -18,11 +18,47 @@ const baslaButonu = document.getElementById('basla-butonu');
 const oyunAlani = document.getElementById('oyun-alani');
 const skorTablosu = document.getElementById('skor-tablosu');
 
-// Eğer kazanma sesi varsa, tanımlayın (HTML'de yoksa bu satırı kaldırabilirsiniz)
+// Eğer kazanma sesi varsa, tanımlayın
 const kazanmaSesi = document.getElementById('kazanmaSesi');
+
+// ----------------- AYARLAR -----------------
+const ayarlarButonu = document.getElementById('ayarlar-butonu');
+const ayarlarPaneli = document.getElementById('ayarlar-paneli');
+const ayarlarKapat = document.getElementById('ayarlar-kapat');
+const sesAcikCheck = document.getElementById('ses-acik');
+const zorlukSecim = document.getElementById('zorluk');
+const sesSeviye = document.getElementById('ses-seviye');
+
+// Aç-kapa
+ayarlarButonu.addEventListener('click', () => {
+    ayarlarPaneli.classList.toggle('gizli');
+});
+
+ayarlarKapat.addEventListener('click', () => {
+    ayarlarPaneli.classList.add('gizli');
+});
+
+// Ses çalma fonksiyonu
+function sesCal(ses) {
+    if (ses && sesAcikCheck.checked) {
+        ses.volume = parseFloat(sesSeviye.value); // 0.0 - 1.0 arası
+        ses.currentTime = 0;
+        ses.play();
+    }
+}
+
+// Zorluk kontrolü
+function zorlukKatsayisi() {
+    switch (zorlukSecim.value) {
+        case "kolay": return 1.5;
+        case "zor": return 0.7;
+        default: return 1;
+    }
+}
 
 // Oyun durumu değişkenleri
 let mevcutSeviye = 1;
+let oyunAktif = false; 
 let toplamPuan = 0;
 let mevcutHedefSayi = 0;
 let zamanlayici;
@@ -46,6 +82,7 @@ function butonlariAktiflestir() {
 
 // Yeni seviyeyi başlat
 function seviyeyiBaslat() {
+    oyunAktif = true;
     butonlariAktiflestir();
     seviyeSonuMesaji.classList.add('gizli');
 
@@ -79,7 +116,7 @@ function seviyeyiBaslat() {
     mevcutHedefSayi = geciciHedefSayi;
 
     // Zaman ayarı
-    kalanZaman = 15 - mevcutSeviye;
+    kalanZaman = (15 - mevcutSeviye) * zorlukKatsayisi();
     if (kalanZaman < 4) kalanZaman = 4;
 
     // Arayüz güncelle
@@ -103,8 +140,7 @@ function seviyeyiBaslat() {
         const suAnkiAralik = minAralik + (yuzde / 100) * (maxAralik - minAralik);
 
         if (Date.now() - sonSesZamani > suAnkiAralik) {
-            zamanlayiciSesi.currentTime = 0;
-            zamanlayiciSesi.play();
+            sesCal(zamanlayiciSesi);
             sonSesZamani = Date.now();
         }
 
@@ -126,8 +162,7 @@ butonlar.forEach(buton => {
         mevcutHedefSayi -= cikarilacakDeger;
         hedefSayiElementi.textContent = mevcutHedefSayi;
 
-        tiklamaSesi.currentTime = 0;
-        tiklamaSesi.play();
+        sesCal(tiklamaSesi);
 
         if (mevcutHedefSayi === 0) {
             oyunuKazan();
@@ -142,30 +177,25 @@ butonlar.forEach(buton => {
 });
 
 // Oyuncu kazandığında
+oyunAktif = false;
 function oyunuKazan() {
     if (kazanmaSesi) {
-        kazanmaSesi.play();
+        sesCal(kazanmaSesi);
     }
     zamanlayiciSesi.pause();
     clearInterval(zamanlayici);
     butonlariDevreDisiBirak();
 
-    // 1. Önce kalan süreyi saniye cinsinden hesapla
     const gecenSure = (Date.now() - baslangicZamani) / 1000;
     const kalanSaniye = kalanZaman - gecenSure;
 
-    // 2. Yeni puanlama formülünü uygula
     const seviyePuani = mevcutSeviye * 10;
-    const zamanBonusu = Math.max(0, kalanSaniye) * 5; // Negatif bonus olmasın diye Math.max kullanılır.
+    const zamanBonusu = Math.max(0, kalanSaniye) * 5;
     const kazanilanPuan = Math.round(seviyePuani + zamanBonusu);
 
-    // 3. Toplam puanı güncelle
     toplamPuan += kazanilanPuan;
     puanGosterge.textContent = toplamPuan;
 
-    // -----------------------------------------------------------
-    
-    // Skor tablosuna yazdırırken geçen süreyi formatla
     const gecenSureSaniye = gecenSure.toFixed(2);
     const yeniSkorSatiri = document.createElement('li');
     yeniSkorSatiri.innerHTML = `Seviye ${mevcutSeviye}: <strong>${gecenSureSaniye} sn</strong> (+${kazanilanPuan} Puan)`;
@@ -173,22 +203,23 @@ function oyunuKazan() {
 
     mesajMetni.textContent = `Tebrikler! +${kazanilanPuan} puan kazandın.`;
     sonrakiSeviyeButonu.textContent = "Sonraki Seviye";
-    sonrakiSeviyeButonu.disabled = false; // Butonu aktif yap
+    sonrakiSeviyeButonu.disabled = false;
     seviyeSonuMesaji.classList.remove('gizli');
 
     mevcutSeviye++;
 }
 
 // Oyuncu kaybettiğinde
+oyunAktif = false;
 function oyunuKaybet(sebep) {
     zamanlayiciSesi.pause();
-    kaybetmeSesi.play();
+    sesCal(kaybetmeSesi);
     clearInterval(zamanlayici);
     butonlariDevreDisiBirak();
 
     mesajMetni.textContent = `Kaybettin! Sebep: ${sebep}`;
     sonrakiSeviyeButonu.textContent = "Yeniden Başla";
-    sonrakiSeviyeButonu.disabled = false; // Butonu aktif yap
+    sonrakiSeviyeButonu.disabled = false;
     seviyeSonuMesaji.classList.remove('gizli');
 
     seviyeListesi.innerHTML = '';
@@ -196,26 +227,20 @@ function oyunuKaybet(sebep) {
     toplamPuan = 0;
 }
 
-// "Sonraki Seviye" veya "Yeniden Başla" butonuna tıklama
+// "Sonraki Seviye" veya "Yeniden Başla"
 sonrakiSeviyeButonu.addEventListener('click', () => {
-    // Önce hangi sesin çalınacağına karar verelim
     if (sonrakiSeviyeButonu.textContent === "Yeniden Başla") {
-        baslatmaSesi.play();
+        sesCal(baslatmaSesi);
     } else {
-        // Eğer butonun üzerinde "Yeniden Başla" yazmıyorsa,
-        // bu "Sonraki Seviye" durumudur. İlgili sesi çalalım.
-        // `sonrakiSeviyeSesi` değişkeninin null olmamasını kontrol edelim.
         if (sonrakiSeviyeSesi) {
-            sonrakiSeviyeSesi.play();
+            sesCal(sonrakiSeviyeSesi);
         }
     }
-    
-    // Ses çalındıktan sonra, her durumda yapılması gereken işlemleri yapalım
     puanGosterge.textContent = toplamPuan;
-    seviyeyiBaslat(); // Bu, yeni seviyeyi başlatan en önemli komuttur.
+    seviyeyiBaslat();
 });
 
-// "Başla" butonuna tıklanınca oyunu başlat
+// "Başla" butonuna tıklanınca
 baslaButonu.addEventListener('click', () => {
     baslangicEkrani.classList.add('gizli');
     oyunAlani.classList.remove('gizli');
@@ -223,52 +248,33 @@ baslaButonu.addEventListener('click', () => {
     seviyeyiBaslat();
 });
 
-// ----------------- AYARLAR -----------------
-const ayarlarButonu = document.getElementById('ayarlar-butonu');
-const ayarlarPaneli = document.getElementById('ayarlar-paneli');
-const ayarlarKapat = document.getElementById('ayarlar-kapat');
-const sesAcikCheck = document.getElementById('ses-acik');
-const zorlukSecim = document.getElementById('zorluk');
+// ----------------- KLAVYE KONTROLLERİ -----------------
+window.addEventListener('keydown', (e) => {
+    
+    if (e.key === "Enter") {
+        if (!sonrakiSeviyeButonu.disabled) {
+            sonrakiSeviyeButonu.click();
+        }
+        return; 
+    }
 
-// Aç-kapa
-ayarlarButonu.addEventListener('click', () => {
-    ayarlarPaneli.classList.toggle('gizli');
+    
+    if (!oyunAktif) return;
+
+    
+    if (e.key >= "0" && e.key <= "9") {
+        const tus = parseInt(e.key);
+
+        
+        const hedefButon = Array.from(butonlar).find(b => parseInt(b.dataset.deger) === tus);
+
+        if (hedefButon && !hedefButon.disabled) {
+            hedefButon.click(); // butona tıklanmış gibi çalıştır
+        }
+    }
+
+    
+    if (e.key === "Escape") {
+        ayarlarPaneli.classList.toggle('gizli');
+    }
 });
-
-ayarlarKapat.addEventListener('click', () => {
-    ayarlarPaneli.classList.add('gizli');
-});
-
-// Ses kontrolü
-function sesCal(ses) {
-    if (ses && sesAcikCheck.checked) {
-        ses.currentTime = 0;
-        ses.play();
-    }
-}
-
-// oyun.js içindeki tüm ses.play() çağrılarını
-// => sesCal(sesAdi) şeklinde değiştirirsen ses aç/kapat kontrolü aktif olur.
-
-// Zorluk kontrolü
-function zorlukKatsayisi() {
-    switch (zorlukSecim.value) {
-        case "kolay": return 1.5;
-        case "zor": return 0.7;
-        default: return 1;
-    }
-}
-
-// seviyeyiBaslat içinde süre ayarlamasını güncelle:
-/// kalanZaman = (15 - mevcutSeviye) * zorlukKatsayisi();
-
-const sesSeviye = document.getElementById('ses-seviye');
-
-// Ses çalma fonksiyonu
-function sesCal(ses) {
-    if (ses && sesAcikCheck.checked) {
-        ses.volume = parseFloat(sesSeviye.value); // volume uygula
-        ses.currentTime = 0;
-        ses.play();
-    }
-}
